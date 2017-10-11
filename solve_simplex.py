@@ -94,6 +94,8 @@ class SimplexTable(AsciiTable):
 class SimplexSolution:
 
     def __init__(self, funcCoeff, conditions):
+        self.firstSolution = True
+        
         self.funcVarsCount = len(funcCoeff)
         self.aVarsCount = len(conditions)
         allVarsCount = self.funcVarsCount + self.aVarsCount
@@ -148,7 +150,7 @@ class SimplexSolution:
         self.pivotColumn = varIndex + 1
         for row in self.table[:-1]:
             value = row[self.pivotColumn]
-            if value != 0:
+            if value > 0:
                 row.append(row[0] / value)
             else:
                 row.append(INF)
@@ -165,6 +167,42 @@ class SimplexSolution:
             return
         
         return (self.pivotRow, self.pivotColumn)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.firstSolution:
+            self.firstSolution = False
+            return self
+
+        elif self.isOptimal():
+            raise StopIteration
+
+        else:
+            # calc next
+            pivotValue = self.table[self.pivotRow][self.pivotColumn]
+            if pivotValue != 1:
+                # normalize row
+                newRow = list(map(lambda x : x / pivotValue, self.table[self.pivotRow]))
+                self.table[self.pivotRow] = newRow
+
+            for i, row in enumerate(self.table):
+                if i == self.pivotRow:
+                    continue
+
+                pivotCoeff = row[self.pivotColumn]
+                
+                for j in range(len(self.allVars) + 1):
+                    row[j] = row[j] - pivotCoeff * self.table[self.pivotRow][j]
+
+            self.basis[self.pivotRow] = self.allVars[self.pivotColumn - 1]
+
+            for i in range(len(self.basis)):
+                self.table[i].pop()
+            self._calcTheta()
+                    
+            return self
 
 # DEBUG
 if __name__ == '__main__':
@@ -185,8 +223,11 @@ if __name__ == '__main__':
         [1, 0, 7]
     ]
     solution = SimplexSolution(funcCoeff, conditions)
-    solutionTable = SimplexTable(solution.basis, solution.allVars, solution.table)
-    print(solutionTable)
-    print(solution.getSolutionVector())
-    print(solution.getFuncValue())
-    print(solution.getPivot())
+
+    for step in solution:
+        solutionTable = SimplexTable(step.basis, step.allVars, step.table)
+        print(solutionTable)
+        print(step.getSolutionVector())
+        print(step.getFuncValue())
+        print(step.getPivot())
+
