@@ -109,7 +109,6 @@ class SimplexSolution:
 
             t = [0] * len(self.basis)
             t[i] = 1
-
             row += t
 
             self.table.append(row)
@@ -118,6 +117,8 @@ class SimplexSolution:
         indexRow += list(map(lambda x : -x, funcCoeff))
         indexRow += [0] * len(self.basis)
         self.table.append(indexRow)
+
+        self._calcTheta()
 
     def getSolutionVector(self):
         vector = []
@@ -133,7 +134,37 @@ class SimplexSolution:
 
     def getFuncValue(self):
         return self.table[-1][0]
-                
+
+    def _calcTheta(self):
+        INF = 999999
+        
+        if self.isOptimal():
+            return
+
+        indexes = self.table[-1][1:]
+        minValue = min(indexes)
+        varIndex = indexes.index(minValue)
+
+        self.pivotColumn = varIndex + 1
+        for row in self.table[:-1]:
+            value = row[self.pivotColumn]
+            if value != 0:
+                row.append(row[0] / value)
+            else:
+                row.append(INF)
+
+        est = [self.table[i][-1] for i in range(len(self.basis))]
+        minEst = min(est)
+        self.pivotRow = est.index(minEst)
+
+    def isOptimal(self):
+        return all(map(lambda x : x >= 0, self.table[-1][1:]))
+
+    def getPivot(self):
+        if self.isOptimal():
+            return
+        
+        return (self.pivotRow, self.pivotColumn)
 
 # DEBUG
 if __name__ == '__main__':
@@ -158,3 +189,4 @@ if __name__ == '__main__':
     print(solutionTable)
     print(solution.getSolutionVector())
     print(solution.getFuncValue())
+    print(solution.getPivot())
