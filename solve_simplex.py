@@ -90,6 +90,51 @@ class SimplexTable(AsciiTable):
 
         AsciiTable.__init__(self, [header, *rows], True, False)
 
+
+class SimplexSolution:
+
+    def __init__(self, funcCoeff, conditions):
+        self.funcVarsCount = len(funcCoeff)
+        self.aVarsCount = len(conditions)
+        allVarsCount = self.funcVarsCount + self.aVarsCount
+
+        self.basis = ['x' + str(i) for i in range(self.funcVarsCount + 1, allVarsCount + 1)]
+        self.allVars = ['x' + str(i) for i in range(1, allVarsCount + 1)]
+
+        self.table = []
+
+        for i in range(len(self.basis)):
+            row = [conditions[i][-1]]
+            row += conditions[i][:-1]
+
+            t = [0] * len(self.basis)
+            t[i] = 1
+
+            row += t
+
+            self.table.append(row)
+
+        indexRow = [0]
+        indexRow += list(map(lambda x : -x, funcCoeff))
+        indexRow += [0] * len(self.basis)
+        self.table.append(indexRow)
+
+    def getSolutionVector(self):
+        vector = []
+        
+        for var in self.allVars:
+            if var in self.basis:
+                i = self.basis.index(var)
+                vector.append(self.table[i][0])
+            else:
+                vector.append(0)
+
+        return vector
+
+    def getFuncValue(self):
+        return self.table[-1][0]
+                
+
 # DEBUG
 if __name__ == '__main__':
     data = [
@@ -101,3 +146,15 @@ if __name__ == '__main__':
     ]
     table = SimplexTable(['x3', 'x4', 'x5', 'x6'], ['x' + str(i) for i in range(1, 7)], data)
     print(table)
+    funcCoeff = [2, 3]
+    conditions = [
+        [1, 3, 18],
+        [2, 1, 16],
+        [0, 1, 5],
+        [1, 0, 7]
+    ]
+    solution = SimplexSolution(funcCoeff, conditions)
+    solutionTable = SimplexTable(solution.basis, solution.allVars, solution.table)
+    print(solutionTable)
+    print(solution.getSolutionVector())
+    print(solution.getFuncValue())
