@@ -93,10 +93,11 @@ class SimplexTable(AsciiTable):
 # DEBUG
 if __name__ == '__main__':
     data = [
-        [ 95, 0, 6.5, 0, 1, -2.5,  1, 0],
-        [ 10, 0,  -2, 1, 0,    1, -1, 0],
-        [ 15, 1, 2.5, 0, 0, -0.5,  1, 0],
-        [180, 0,   2, 0, 0,    2,  2, 0],
+        [18,  1,  3, 1, 0, 0, 0,     6],
+        [16,  2,  1, 0, 1, 0, 0,    16],
+        [ 5,  0,  1, 0, 0, 1, 0,     5],
+        [ 7,  1,  0, 0, 0, 0, 1, 'INF'],
+        [ 0, -2, -3, 0, 0, 0, 0       ],
     ]
-    table = SimplexTable(['x4','x3','x1'], ['x' + str(i) for i in range(1, 7)], data)
+    table = SimplexTable(['x3', 'x4', 'x5', 'x6'], ['x' + str(i) for i in range(1, 7)], data)
     print(table)
