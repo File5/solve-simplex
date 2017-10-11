@@ -1,6 +1,8 @@
 class AsciiTable:
 
     def __init__(self, data=[], header=True, separateLines=False):
+        PRECISION = 8
+        
         self.data = []
         self.colomnWidth = []
 
@@ -8,6 +10,9 @@ class AsciiTable:
             newRow = []
             
             for i, item in enumerate(row):
+                if type(item) is float:
+                    item = round(item, PRECISION)
+                    
                 value = str(item)
                 newRow.append(value)
 
