@@ -32,10 +32,21 @@ class AsciiTable:
 
         self.header = header
         self.separateLines = separateLines
+        
+        self.highlightedRowIndex = None
+        self.highlightedColIndex = None
+
+    def highlightRow(self, index):
+        self.highlightedRowIndex = index
+        
+    def highlightCol(self, index):
+        self.highlightedColIndex = index
 
     def __str__(self):
 
         chars = self.charMap
+        HIGHLIGHT_ROW = "-->"
+        HIGHLIGHT_COL = "^\n|\n|"
 
         def _getHorizontalLine():
             result = chars['corner']
@@ -61,14 +72,47 @@ class AsciiTable:
 
             return result
 
-        output = _getHorizontalLine() + '\n'
+        def _getLinePrefix(i):
+            highlightRowEnabled = not self.highlightedRowIndex is None
+            if not highlightRowEnabled:
+                return ""
+            
+            PREFIX = " " * len(HIGHLIGHT_ROW)
+
+            if i == self.highlightedRowIndex:
+                return HIGHLIGHT_ROW
+            else:
+                return PREFIX
+
+        def _getColHighlightFooter(highlightedCol, linePrefix = ""):
+            widths = [2 * self.padding + 1 + w for w in self.colomnWidth]
+            widths = widths[:highlightedCol]
+
+            markerPos = sum(widths) + 1
+
+            markerPos += self.padding + self.colomnWidth[highlightedCol] // 2
+
+            footer = ""
+            marker = HIGHLIGHT_COL.split("\n")
+            
+            for char in marker:
+                footer += linePrefix + " " * markerPos + char + "\n"
+
+            return footer
+
+        highlightColEnabled = not self.highlightedColIndex is None
+
+        output = _getLinePrefix(-1) + _getHorizontalLine() + '\n'
 
         lastI = len(self.data) - 1
         for i, row in enumerate(self.data):
-            output += _getRowWithData(row) + '\n'
+            output += _getLinePrefix(i) + _getRowWithData(row) + '\n'
 
             if (i == 0 and self.header) or (self.separateLines) or (i == lastI):
-                output += _getHorizontalLine() + '\n'
+                output += _getLinePrefix(-1) + _getHorizontalLine() + '\n'
+
+        if highlightColEnabled:
+            output += _getColHighlightFooter(self.highlightedColIndex, _getLinePrefix(-1))
 
         return output
 
@@ -95,6 +139,11 @@ class SimplexTable(AsciiTable):
 
         AsciiTable.__init__(self, [header, *rows], True, False)
 
+    def highlightPivot(self, pivot = None):
+        if not pivot is None:
+            pivotRow, pivotColumn = pivot
+            self.highlightRow(pivotRow + 1)
+            self.highlightCol(pivotColumn + 1)
 
 class SimplexSolution:
 
@@ -231,6 +280,7 @@ if __name__ == '__main__':
 
     for step in solution:
         solutionTable = SimplexTable(step.basis, step.allVars, step.table)
+        solutionTable.highlightPivot(step.getPivot())
         print(solutionTable)
         print(step.getSolutionVector())
         print(step.getFuncValue())
