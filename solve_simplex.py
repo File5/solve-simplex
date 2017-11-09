@@ -1,18 +1,21 @@
+from fractions import Fraction
+
+
 class AsciiTable:
 
     def __init__(self, data=[], header=True, separateLines=False):
         PRECISION = 8
-        
+
         self.data = []
         self.colomnWidth = []
 
         for row in data:
             newRow = []
-            
+
             for i, item in enumerate(row):
                 if type(item) is float:
                     item = round(item, PRECISION)
-                    
+
                 value = str(item)
                 newRow.append(value)
 
@@ -32,13 +35,13 @@ class AsciiTable:
 
         self.header = header
         self.separateLines = separateLines
-        
+
         self.highlightedRowIndex = None
         self.highlightedColIndex = None
 
     def highlightRow(self, index):
         self.highlightedRowIndex = index
-        
+
     def highlightCol(self, index):
         self.highlightedColIndex = index
 
@@ -76,7 +79,7 @@ class AsciiTable:
             highlightRowEnabled = not self.highlightedRowIndex is None
             if not highlightRowEnabled:
                 return ""
-            
+
             PREFIX = " " * len(HIGHLIGHT_ROW)
 
             if i == self.highlightedRowIndex:
@@ -94,7 +97,7 @@ class AsciiTable:
 
             footer = ""
             marker = HIGHLIGHT_COL.split("\n")
-            
+
             for char in marker:
                 footer += linePrefix + " " * markerPos + char + "\n"
 
@@ -145,11 +148,12 @@ class SimplexTable(AsciiTable):
             self.highlightRow(pivotRow + 1)
             self.highlightCol(pivotColumn + 1)
 
+
 class SimplexSolution:
 
     def __init__(self, funcCoeff, conditions):
         self.firstSolution = True
-        
+
         self.funcVarsCount = len(funcCoeff)
         self.aVarsCount = len(conditions)
         allVarsCount = self.funcVarsCount + self.aVarsCount
@@ -174,11 +178,18 @@ class SimplexSolution:
         indexRow += [0] * len(self.basis)
         self.table.append(indexRow)
 
+        rowCount = len(self.table)
+        colCount = len(self.table[0])
+
+        for i in range(rowCount):
+            for j in range(colCount):
+                self.table[i][j] = Fraction(self.table[i][j])
+
         self._calcTheta()
 
     def getSolutionVector(self):
         vector = []
-        
+
         for var in self.allVars:
             if var in self.basis:
                 i = self.basis.index(var)
@@ -193,7 +204,7 @@ class SimplexSolution:
 
     def _calcTheta(self):
         INF = 999999
-        
+
         if self.isOptimal():
             return
 
@@ -219,7 +230,7 @@ class SimplexSolution:
     def getPivot(self):
         if self.isOptimal():
             return
-        
+
         return (self.pivotRow, self.pivotColumn)
 
     def __iter__(self):
@@ -246,7 +257,7 @@ class SimplexSolution:
                     continue
 
                 pivotCoeff = row[self.pivotColumn]
-                
+
                 for j in range(len(self.allVars) + 1):
                     row[j] = row[j] - pivotCoeff * self.table[self.pivotRow][j]
 
@@ -255,7 +266,7 @@ class SimplexSolution:
             for i in range(len(self.basis)):
                 self.table[i].pop()
             self._calcTheta()
-                    
+
             return self
 
 # DEBUG
@@ -269,12 +280,11 @@ if __name__ == '__main__':
     ]
     table = SimplexTable(['x3', 'x4', 'x5', 'x6'], ['x' + str(i) for i in range(1, 7)], data)
     print(table)
-    funcCoeff = [2, 3]
+    funcCoeff = [3, 3, 4]
     conditions = [
-        [1, 3, 18],
-        [2, 1, 16],
-        [0, 1, 5],
-        [1, 0, 7]
+        [1, 2, 1, 420],
+        [2, 1, 3, 600],
+        [4, 2, 1, 900]
     ]
     solution = SimplexSolution(funcCoeff, conditions)
 
@@ -282,7 +292,6 @@ if __name__ == '__main__':
         solutionTable = SimplexTable(step.basis, step.allVars, step.table)
         solutionTable.highlightPivot(step.getPivot())
         print(solutionTable)
-        print(step.getSolutionVector())
+        print("[" + ", ".join(map(str, step.getSolutionVector())) + "]")
         print(step.getFuncValue())
         print(step.getPivot())
-
